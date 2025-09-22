@@ -252,6 +252,7 @@ const firebaseConfig = {
 
         // 로그인/회원가입 처리
         loginBtn.addEventListener('click', async () => {
+             console.log("로그인 버튼 클릭됨!");
             const name = nameInput.value.trim();
             const password = passwordInput.value.trim();
             if (!name || !password) {
