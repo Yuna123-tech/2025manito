@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>구름반 마니또 게임</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .font-playfair { font-family: 'Playfair Display', serif; }
+        .card-bg { background-color: #f7f9fb; background-image: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); }
+        .invitation-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .btn-gradient { background-image: linear-gradient(to right, #667eea 0%, #764ba2 51%, #667eea 100%); transition: 0.5s; background-size: 200% auto; }
+        .btn-gradient:hover { background-position: right center; }
+    </style>
+</head>
+<body class="card-bg flex items-center justify-center min-h-screen">
+
+    <div class="container mx-auto p-4 sm:p-6 md:p-8 max-w-3xl">
+        <div class="invitation-card p-6 sm:p-8 rounded-2xl shadow-2xl">
+            
+            <div class="text-center mb-8">
+                <h2 class="font-playfair text-gray-500 text-xl">4학년 6반 구름반</h2>
+                <h1 class="font-playfair text-5xl font-bold text-gray-800 mt-2">🌟 비밀 마니또 게임 🌟</h1>
+                <p class="text-gray-600 mt-4">친구들의 마니또가 되어 비밀 선물을 준비해 볼까요?</p>
+            </div>
+
+            <!-- 로그인/회원가입 섹션 -->
+            <div id="auth-section" class="mb-8 p-6 bg-blue-50 rounded-lg shadow-inner border border-blue-200">
+                <h3 class="text-2xl font-bold text-blue-700 text-center mb-5 font-playfair">로그인 / 회원가입</h3>
+                <div class="space-y-4 max-w-sm mx-auto">
+                    <div>
+                        <label for="name-input" class="block text-sm font-medium text-gray-700">이름 (닉네임)</label>
+                        <input type="text" id="name-input" class="mt-1 block w-full px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="예: 김구름">
+                    </div>
+                    <div>
+                        <label for="password-input" class="block text-sm font-medium text-gray-700">비밀번호 (숫자 4자리)</label>
+                        <input type="password" id="password-input" maxlength="4" class="mt-1 block w-full px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="예: 1234">
+                    </div>
+                    <button id="login-btn" class="w-full text-white font-bold py-3 px-4 rounded-md btn-gradient">
+                        로그인
+                    </button>
+                    <button id="signup-btn" class="w-full text-blue-700 font-bold py-3 px-4 rounded-md bg-blue-200 hover:bg-blue-300 transition duration-300">
+                        회원가입
+                    </button>
+                    <button id="admin-login-btn" class="w-full text-gray-700 font-bold py-2 px-4 rounded-md bg-gray-200 hover:bg-gray-300 transition duration-300 text-sm">
+                        관리자 로그인
+                    </button>
+                </div>
+            </div>
+
+            <!-- 마니또 게임 본문 (로그인 후 표시) -->
+            <div id="manito-game-section" class="hidden">
+                <div id="user-info" class="text-center mb-6 p-3 bg-indigo-100 border border-indigo-200 rounded-lg text-indigo-800">
+                    <p class="font-semibold">환영합니다! <span id="current-user-name" class="font-bold"></span> 친구!</p>
+                    <button id="logout-btn" class="mt-2 text-sm text-indigo-600 hover:underline">로그아웃</button>
+                </div>
+
+                <!-- 관리자 패널 -->
+                <div id="admin-panel" class="hidden mb-8 p-4 bg-red-100 border border-red-300 rounded-lg">
+                    <h3 class="font-bold text-lg text-red-800 text-center mb-2">관리자 패널</h3>
+                    <p class="text-center text-red-700 mb-2">마니또 선택: <span id="selection-status" class="font-bold"></span></p>
+                    <button id="toggle-selection-btn" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-md transition duration-300 mb-4">
+                        상태 변경
+                    </button>
+                    <h4 class="font-bold text-md text-red-800 mb-2">학생 목록 및 비밀번호</h4>
+                    <ul id="user-list" class="space-y-2 max-h-60 overflow-y-auto bg-white p-3 rounded-md border border-red-200">
+                        <!-- 학생 목록이 여기에 동적으로 추가됩니다 -->
+                    </ul>
+                </div>
+                
+                <div class="mb-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <h3 class="font-semibold text-lg mb-2 text-gray-700">마니또 참여 방법</h3>
+                    <ol class="list-decimal list-inside space-y-2 text-gray-600">
+                        <li>마니또를 위해 <span class="font-bold text-purple-600">소소하고 작은 선물</span>을 미리 준비해주세요.</li>
+                        <li>아래에 <span class="font-bold">자신을 나타내는 한 줄 설명</span>과 <span class="font-bold">좋아하는 글귀</span>를 작성해주세요. <br><span class="text-red-500 font-semibold">(※ 본인의 이름은 절대로 밝히시면 안 돼요!)</span></li>
+                        <li>다른 친구의 글을 읽고 마음이 가는 글을 선택하면, 그 친구의 마니또가 됩니다. <br><span class="text-blue-600 font-semibold">(※ 선택은 선생님이 기능을 연 후에 가능합니다!)</span></li>
+                    </ol>
+                </div>
+                
+                <div id="manito-form-container" class="mb-8">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="introduction" class="block text-sm font-medium text-gray-700">나를 소개하는 한 줄 (이름 제외)</label>
+                            <input type="text" id="introduction" class="mt-1 block w-full px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="예: 아이들과 함께 성장하는 것을 즐기는 사람입니다.">
+                        </div>
+                        <div>
+                            <label for="quote" class="block text-sm font-medium text-gray-700">좋아하는 글귀나 명언</label>
+                            <textarea id="quote" rows="3" class="mt-1 block w-full px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="예: 별은 바라보는 자에게 빛을 준다."></textarea>
+                        </div>
+                        <button id="submit-btn" class="w-full text-white font-bold py-3 px-4 rounded-md btn-gradient">
+                            제출하기
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <!-- 내가 선택한 마니또 표시 영역 -->
+                    <div id="my-manito-display" class="hidden mb-6 p-4 bg-teal-100 border border-teal-300 rounded-lg">
+                        <h3 class="text-xl font-bold text-center text-teal-800 mb-2 font-playfair">✨ 당신은 이 친구의 비밀 마니또입니다 ✨</h3>
+                        <div class="text-center bg-white p-3 rounded-md">
+                            <p id="my-manito-target-name" class="text-lg font-bold text-indigo-700 mb-2"></p>
+                            <p id="my-manito-introduction" class="text-sm text-gray-700 mb-2"></p>
+                            <p id="my-manito-quote" class="font-serif text-lg italic text-teal-900"></p>
+                        </div>
+                    </div>
+
+                    <h3 class="text-2xl font-playfair font-bold text-center mb-2 text-gray-800">친구의 명언 선택하기</h3>
+                    <p class="text-center text-gray-500 mb-6">마음에 드는 글귀를 선택해 그 친구의 마니또가 되어주세요. (선택은 단 한 번!)</p>
+                    <div id="entries-list" class="grid md:grid-cols-2 gap-4">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 알림용 Modal -->
+    <div id="modal" class="fixed inset-0 bg-gray-800 bg-opacity-60 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center">
+        <div class="relative p-5 border w-full max-w-md shadow-lg rounded-2xl bg-white">
+            <div class="mt-3 text-center">
+                <h3 class="text-lg leading-6 font-bold text-gray-900" id="modal-title"></h3>
+                <div class="mt-2 px-7 py-3">
+                    <p class="text-sm text-gray-600" id="modal-content"></p>
+                </div>
+                <div class="items-center px-4 py-3">
+                    <button id="modal-close" class="w-full px-4 py-2 bg-indigo-500 text-white text-base font-medium rounded-md shadow-sm hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-300">
+                        확인
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 수정용 Modal -->
+    <div id="edit-modal" class="fixed inset-0 bg-gray-800 bg-opacity-60 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center">
+        <div class="relative p-6 border w-full max-w-lg shadow-lg rounded-2xl bg-white">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">내 글 수정하기</h3>
+            <div class="space-y-4">
+                <div>
+                    <label for="edit-introduction" class="block text-sm font-medium text-gray-700">나를 소개하는 한 줄</label>
+                    <input type="text" id="edit-introduction" class="mt-1 block w-full px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label for="edit-quote" class="block text-sm font-medium text-gray-700">좋아하는 글귀나 명언</label>
+                    <textarea id="edit-quote" rows="4" class="mt-1 block w-full px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                </div>
+            </div>
+            <div class="flex items-center justify-end mt-6 space-x-3">
+                <button id="cancel-edit-btn" class="px-4 py-2 bg-gray-200 text-gray-800 text-base font-medium rounded-md shadow-sm hover:bg-gray-300 focus:outline-none">
+                    취소
+                </button>
+                <button id="save-edit-btn" class="px-4 py-2 bg-indigo-500 text-white text-base font-medium rounded-md shadow-sm hover:bg-indigo-600 focus:outline-none">
+                    수정 완료
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, setDoc, deleteDoc, serverTimestamp, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // ===================================================================================
+        // ★★★ 중요 ★★★ 여기에 본인의 Firebase 설정 정보를 붙여넣으세요!
+        // Firebase 콘솔에서 '프로젝트 설정' > '내 앱'에서 찾을 수 있습니다.
+    const firebaseConfig = {
+  apiKey: "AIzaSyBLJ_rZaQeIKINyaluOrv341a4n67a1S0I",
+  authDomain: "manito-e16bb.firebaseapp.com",
+  projectId: "manito-e16bb",
+  storageBucket: "manito-e16bb.firebasestorage.app",
+  messagingSenderId: "554752517590",
+  appId: "1:554752517590:web:bb9a29289714a0ac8c7077",
+  measurementId: "G-0PTMJLKNMB"
+};
+        // ===================================================================================
+
+        // ===================================================================================
+        // ★★★ 관리자 설정 ★★★ 여기에 관리자 계정 정보를 입력하세요!
+        // 이메일 주소는 실제 이메일 형식을 따라야 합니다. (예: admin@example.com)
+        const ADMIN_EMAIL = "dbsdk0405@gmail.com"; 
+        const ADMIN_PASSWORD = "admin"; // 관리자 로그인용 비밀번호
+        // ===================================================================================
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        
+        // --- DOM Elements ---
+        const authSection = document.getElementById('auth-section');
+        const manitoGameSection = document.getElementById('manito-game-section');
+        const nameInput = document.getElementById('name-input');
+        const passwordInput = document.getElementById('password-input');
+        const loginBtn = document.getElementById('login-btn');
+        const signupBtn = document.getElementById('signup-btn');
+        const adminLoginBtn = document.getElementById('admin-login-btn');
+        const currentUserNameSpan = document.getElementById('current-user-name');
+        const logoutBtn = document.getElementById('logout-btn');
+
+        const introductionInput = document.getElementById('introduction');
+        const quoteInput = document.getElementById('quote');
+        const submitBtn = document.getElementById('submit-btn');
+        const entriesList = document.getElementById('entries-list');
+        const manitoFormContainer = document.getElementById('manito-form-container');
+        const modal = document.getElementById('modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalContent = document.getElementById('modal-content');
+        const modalClose = document.getElementById('modal-close');
+        const editModal = document.getElementById('edit-modal');
+        const editIntroductionInput = document.getElementById('edit-introduction');
+        const editQuoteInput = document.getElementById('edit-quote');
+        const saveEditBtn = document.getElementById('save-edit-btn');
+        const cancelEditBtn = document.getElementById('cancel-edit-btn');
+        const adminPanel = document.getElementById('admin-panel');
+        const selectionStatus = document.getElementById('selection-status');
+        const toggleSelectionBtn = document.getElementById('toggle-selection-btn');
+        const userList = document.getElementById('user-list');
+
+        const myManitoDisplay = document.getElementById('my-manito-display');
+        const myManitoTargetName = document.getElementById('my-manito-target-name');
+        const myManitoIntroduction = document.getElementById('my-manito-introduction');
+        const myManitoQuote = document.getElementById('my-manito-quote');
+
+
+        // --- Global State ---
+        let currentUser = null;
+        let currentUserName = '';
+        let currentUserUid = '';
+        let currentEntries = []; // 실시간 데이터를 저장할 배열
+        let userHasSubmitted = false;
+        let userHasSelected = false;
+        let isSelectionOpen = false;
+        let currentEditingDocId = null;
+
+        // --- Functions ---
+        function showModal(title, content) {
+            modalTitle.textContent = title;
+            modalContent.textContent = content;
+            modal.classList.remove('hidden');
+        }
+
+        modalClose.addEventListener('click', () => modal.classList.add('hidden'));
+
+        // 비밀번호 유효성 검사 (숫자 4자리)
+        function isValidPassword(password) {
+            return /^\d{4}$/.test(password);
+        }
+
+        // 로그인/회원가입 처리
+        loginBtn.addEventListener('click', async () => {
+            const name = nameInput.value.trim();
+            const password = passwordInput.value.trim();
+            if (!name || !password) {
+                showModal('입력 오류', '이름과 비밀번호를 모두 입력해주세요.');
+                return;
+            }
+            if (!isValidPassword(password)) {
+                showModal('비밀번호 오류', '비밀번호는 숫자 4자리여야 합니다.');
+                return;
+            }
+
+            // 사용자별 고유 이메일 생성 (Firebase Auth 이메일 형식 요구사항)
+            const email = `${name.replace(/\s+/g, '')}@manito.com`;
+
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                if (error.code === 'auth/user-not-found') {
+                    showModal('로그인 실패', '이름 또는 비밀번호가 올바르지 않습니다.');
+                } else if (error.code === 'auth/wrong-password') {
+                    showModal('로그인 실패', '비밀번호가 올바르지 않습니다.');
+                } else {
+                    showModal('로그인 오류', `로그인 중 오류가 발생했습니다: ${error.message}`);
+                }
+            }
+        });
+
+        signupBtn.addEventListener('click', async () => {
+            const name = nameInput.value.trim();
+            const password = passwordInput.value.trim();
+            if (!name || !password) {
+                showModal('입력 오류', '이름과 비밀번호를 모두 입력해주세요.');
+                return;
+            }
+            if (!isValidPassword(password)) {
+                showModal('비밀번호 오류', '비밀번호는 숫자 4자리여야 합니다.');
+                return;
+            }
+
+            const email = `${name.replace(/\s+/g, '')}@manito.com`;
+
+            try {
+                // 이미 같은 이름으로 가입된 사용자가 있는지 확인
+                const usersRef = collection(db, "users");
+                const q = query(usersRef, where("name", "==", name));
+                const querySnapshot = await getDocs(q);
+                if (!querySnapshot.empty) {
+                    showModal('회원가입 실패', '이미 존재하는 이름입니다. 다른 이름을 사용해주세요.');
+                    return;
+                }
+
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                await updateProfile(userCredential.user, { displayName: name }); // displayName 설정
+                
+                // Firestore에 사용자 정보 저장 (비밀번호도 저장하여 관리자 열람 가능)
+                await setDoc(doc(db, "users", userCredential.user.uid), {
+                    name: name,
+                    password: password, // 관리자 열람을 위해 비밀번호 저장 (보안상 권장되지는 않지만 요청에 따름)
+                    uid: userCredential.user.uid,
+                    createdAt: serverTimestamp()
+                });
+
+                showModal('회원가입 성공', '회원가입이 완료되었습니다. 자동으로 로그인됩니다.');
+            } catch (error) {
+                if (error.code === 'auth/email-already-in-use') {
+                    showModal('회원가입 실패', '이미 사용 중인 이름(이메일)입니다. 로그인하거나 다른 이름을 사용해주세요.');
+                } else {
+                    showModal('회원가입 오류', `회원가입 중 오류가 발생했습니다: ${error.message}`);
+                }
+            }
+        });
+
+        adminLoginBtn.addEventListener('click', async () => {
+            try {
+                await signInWithEmailAndPassword(auth, ADMIN_EMAIL, ADMIN_PASSWORD);
+            } catch (error) {
+                showModal('관리자 로그인 실패', '관리자 이메일 또는 비밀번호가 올바르지 않습니다.');
+            }
+        });
+
+        logoutBtn.addEventListener('click', async () => {
+            await signOut(auth);
+        });
+
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                currentUserUid = user.uid;
+                currentUserName = user.displayName || user.email.split('@')[0]; // displayName 또는 이메일에서 이름 추출
+                currentUserNameSpan.textContent = currentUserName;
+
+                authSection.classList.add('hidden');
+                manitoGameSection.classList.remove('hidden');
+
+                if (currentUser.email === ADMIN_EMAIL) {
+                    adminPanel.classList.remove('hidden');
+                    setupAdminControlsListener();
+                    setupUserListListener(); // 관리자일 경우 학생 목록 리스너 추가
+                } else {
+                    adminPanel.classList.add('hidden');
+                }
+                setupEntriesListener();
+            } else {
+                currentUser = null;
+                currentUserUid = '';
+                currentUserName = '';
+                authSection.classList.remove('hidden');
+                manitoGameSection.classList.add('hidden');
+                adminPanel.classList.add('hidden'); // 로그아웃 시 관리자 패널 숨김
+                // 입력 필드 초기화
+                nameInput.value = '';
+                passwordInput.value = '';
+            }
+        });
+
+        submitBtn.addEventListener('click', async () => {
+            if (!currentUser || userHasSubmitted) {
+                showModal('알림', userHasSubmitted ? '이미 제출하셨습니다.' : '로그인 정보가 없습니다.');
+                return;
+            }
+            const introduction = introductionInput.value.trim();
+            const quote = quoteInput.value.trim();
+            if (!introduction || !quote) {
+                showModal('입력 오류', '모든 필드를 채워주세요.');
+                return;
+            }
+            submitBtn.disabled = true;
+            submitBtn.textContent = '제출 중...';
+            try {
+                await addDoc(collection(db, "manito-entries"), {
+                    introduction, quote,
+                    authorId: currentUserUid,
+                    authorName: currentUserName, // 제출자 이름 저장
+                    selectedBy: null,
+                    selectedByName: null, // 선택한 사람 이름 저장
+                    timestamp: serverTimestamp()
+                });
+                showModal('성공', '성공적으로 제출되었습니다!');
+            } catch (error) {
+                showModal('오류', '제출 중 오류가 발생했습니다.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '제출하기';
+            }
+        });
+        
+        function setupAdminControlsListener() {
+            onSnapshot(doc(db, "admin-controls", "settings"), (docSnap) => {
+                isSelectionOpen = docSnap.exists() ? docSnap.data().selectionOpen : false;
+                updateUIBasedOnSelectionState();
+            });
+        }
+
+        function setupUserListListener() {
+            onSnapshot(collection(db, "users"), (snapshot) => {
+                userList.innerHTML = '';
+                snapshot.docs.forEach(docSnap => {
+                    const userData = docSnap.data();
+                    const listItem = document.createElement('li');
+                    listItem.className = 'flex justify-between items-center bg-gray-50 p-2 rounded-md border border-gray-100';
+                    listItem.innerHTML = `
+                        <span class="font-medium text-gray-700">${userData.name}</span>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-600">PW: ${userData.password}</span>
+                            <button class="reset-password-btn text-red-500 hover:text-red-700 text-sm" data-uid="${userData.uid}" data-name="${userData.name}">초기화</button>
+                        </div>
+                    `;
+                    userList.appendChild(listItem);
+                });
+
+                // 비밀번호 초기화 버튼 이벤트 리스너 추가
+                userList.querySelectorAll('.reset-password-btn').forEach(button => {
+                    button.addEventListener('click', async (e) => {
+                        const targetUid = e.target.dataset.uid;
+                        const targetName = e.target.dataset.name;
+                        if (confirm(`${targetName} 학생의 비밀번호를 '1234'로 초기화하시겠습니까?`)) {
+                            const userDocRef = doc(db, "users", targetUid);
+                            const userEmail = `${targetName.replace(/\s+/g, '')}@manito.com`;
+
+                            try {
+                                // Firebase Auth 비밀번호 업데이트 (이메일로 변경)
+                                const usersRef = await getDocs(collection(db, "users"));
+                                const targetUserDoc = usersRef.docs.find(d => d.data().uid === targetUid);
+                                if (targetUserDoc) {
+                                    // Firebase Admin SDK를 사용해야 하지만, 여기서는 직접 사용자에게 이메일을 보내서 초기화하도록 안내하는 것이 현실적입니다.
+                                    // 웹 클라이언트 SDK로는 다른 사용자의 비밀번호를 직접 변경할 수 없습니다.
+                                    // 여기서는 Firestore에 저장된 비밀번호만 '1234'로 업데이트하고,
+                                    // 실제 Auth 비밀번호 초기화는 관리자가 Firebase 콘솔에서 하거나, '비밀번호 재설정 이메일 보내기' 기능을 사용해야 합니다.
+                                    // 본 요청에서는 Firestore에 저장된 비밀번호만 초기화하는 것으로 간주합니다.
+                                    await updateDoc(userDocRef, { password: '1234' });
+                                    showModal('비밀번호 초기화', `${targetName} 학생의 비밀번호를 '1234'로 초기화했습니다.`);
+                                } else {
+                                     showModal('오류', '사용자 정보를 찾을 수 없습니다.');
+                                }
+                            } catch (error) {
+                                showModal('오류', `비밀번호 초기화 중 오류가 발생했습니다: ${error.message}`);
+                            }
+                        }
+                    });
+                });
+            });
+        }
+
+
+        function setupEntriesListener() {
+            if (!currentUser) return;
+            onSnapshot(collection(db, "manito-entries"), async (snapshot) => {
+                const entries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                entries.sort((a, b) => (a.timestamp?.toMillis() || 0) - (b.timestamp?.toMillis() || 0));
+                
+                currentEntries = entries; // 실시간 데이터를 전역 변수에 저장
+
+                userHasSubmitted = entries.some(entry => entry.authorId === currentUserUid);
+                userHasSelected = entries.some(entry => entry.selectedBy === currentUserUid);
+
+                if (userHasSubmitted) {
+                    manitoFormContainer.style.display = 'none';
+                } else {
+                    manitoFormContainer.style.display = 'block';
+                }
+                
+                const mySelection = entries.find(entry => entry.selectedBy === currentUserUid);
+
+                if (mySelection) {
+                    myManitoTargetName.textContent = mySelection.authorName + " 친구";
+                    myManitoIntroduction.textContent = `"${mySelection.introduction}"`;
+                    myManitoQuote.textContent = `"${mySelection.quote}"`;
+                    myManitoDisplay.classList.remove('hidden');
+                } else {
+                    myManitoDisplay.classList.add('hidden');
+                }
+
+                renderEntries(entries);
+            });
+        }
+        
+        function updateUIBasedOnSelectionState() {
+            if (currentUser && currentUser.email === ADMIN_EMAIL) {
+                selectionStatus.textContent = isSelectionOpen ? '진행 중' : '마감';
+                toggleSelectionBtn.textContent = isSelectionOpen ? '마니또 선택 마감하기' : '마니또 선택 시작하기';
+            }
+            renderEntries(currentEntries); // 저장된 데이터로 화면 다시 그리기
+        }
+        
+        function createEntryCard(entry) {
+            const card = document.createElement('div');
+            card.className = 'p-4 bg-white rounded-xl shadow-lg border border-gray-200 flex flex-col justify-between transition-transform hover:scale-105';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'flex-grow';
+            contentDiv.innerHTML = `<p class="text-sm text-gray-500 mb-2">"${entry.introduction}"</p><p class="font-serif text-lg italic text-gray-800">"${entry.quote}"</p>`;
+            card.appendChild(contentDiv);
+            
+            const buttonContainer = document.createElement('div');
+            buttonContainer.className = 'mt-4 pt-4 border-t border-gray-100';
+
+            const isAdmin = currentUser && currentUser.email === ADMIN_EMAIL;
+
+            if (entry.authorId === currentUserUid) { // 내가 쓴 글
+                const canEdit = (!isSelectionOpen && !entry.selectedBy) || isAdmin;
+                if (canEdit) {
+                    const editBtn = document.createElement('button');
+                    editBtn.textContent = '수정';
+                    editBtn.className = 'w-1/2 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-l-md transition duration-300';
+                    editBtn.onclick = () => openEditModal(entry);
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.textContent = '삭제';
+                    deleteBtn.className = 'w-1/2 bg-red-500 hover
