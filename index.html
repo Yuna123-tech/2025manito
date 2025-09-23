@@ -167,7 +167,7 @@
         // ===================================================================================
         // ★★★ 중요 ★★★ 여기에 본인의 Firebase 설정 정보를 붙여넣으세요!
         // Firebase 콘솔에서 '프로젝트 설정' > '내 앱'에서 찾을 수 있습니다.
-const firebaseConfig = {
+   const firebaseConfig = {
   apiKey: "AIzaSyBLJ_rZaQeIKINyaluOrv341a4n67a1S0I",
   authDomain: "manito-e16bb.firebaseapp.com",
   projectId: "manito-e16bb",
@@ -186,361 +186,339 @@ const firebaseConfig = {
         const ADMIN_PASSWORD = "admin0"; // 관리자 로그인용 비밀번호
         // ===================================================================================
 
-        // Firebase 앱 초기화
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        
-        // --- DOM Elements ---
-        const authSection = document.getElementById('auth-section');
-        const manitoGameSection = document.getElementById('manito-game-section');
-        const nameInput = document.getElementById('name-input');
-        const passwordInput = document.getElementById('password-input');
-        const loginBtn = document.getElementById('login-btn');
-        const signupBtn = document.getElementById('signup-btn');
-        const adminLoginBtn = document.getElementById('admin-login-btn');
-        const currentUserNameSpan = document.getElementById('current-user-name');
-        const logoutBtn = document.getElementById('logout-btn');
+        // DOMContentLoaded 이벤트 리스너: DOM이 완전히 로드된 후 스크립트 실행
+        document.addEventListener('DOMContentLoaded', () => {
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app);
+            const auth = getAuth(app);
+            
+            // --- DOM Elements ---
+            const authSection = document.getElementById('auth-section');
+            const manitoGameSection = document.getElementById('manito-game-section');
+            const nameInput = document.getElementById('name-input');
+            const passwordInput = document.getElementById('password-input');
+            const loginBtn = document.getElementById('login-btn');
+            const signupBtn = document.getElementById('signup-btn');
+            const adminLoginBtn = document.getElementById('admin-login-btn');
+            const currentUserNameSpan = document.getElementById('current-user-name');
+            const logoutBtn = document.getElementById('logout-btn');
 
-        const introductionInput = document.getElementById('introduction');
-        const quoteInput = document.getElementById('quote');
-        const submitBtn = document.getElementById('submit-btn');
-        const entriesList = document.getElementById('entries-list');
-        const manitoFormContainer = document.getElementById('manito-form-container');
-        const modal = document.getElementById('modal');
-        const modalTitle = document.getElementById('modal-title');
-        const modalContent = document.getElementById('modal-content');
-        const modalClose = document.getElementById('modal-close');
-        const editModal = document.getElementById('edit-modal');
-        const editIntroductionInput = document.getElementById('edit-introduction');
-        const editQuoteInput = document.getElementById('edit-quote');
-        const saveEditBtn = document.getElementById('save-edit-btn');
-        const cancelEditBtn = document.getElementById('cancel-edit-btn');
-        const adminPanel = document.getElementById('admin-panel');
-        const selectionStatus = document.getElementById('selection-status');
-        const toggleSelectionBtn = document.getElementById('toggle-selection-btn');
-        const userList = document.getElementById('user-list');
+            const introductionInput = document.getElementById('introduction');
+            const quoteInput = document.getElementById('quote');
+            const submitBtn = document.getElementById('submit-btn');
+            const entriesList = document.getElementById('entries-list');
+            const manitoFormContainer = document.getElementById('manito-form-container');
+            const modal = document.getElementById('modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalContent = document.getElementById('modal-content');
+            const modalClose = document.getElementById('modal-close');
+            const editModal = document.getElementById('edit-modal');
+            const editIntroductionInput = document.getElementById('edit-introduction');
+            const editQuoteInput = document.getElementById('edit-quote');
+            const saveEditBtn = document.getElementById('save-edit-btn');
+            const cancelEditBtn = document.getElementById('cancel-edit-btn');
+            const adminPanel = document.getElementById('admin-panel');
+            const selectionStatus = document.getElementById('selection-status');
+            const toggleSelectionBtn = document.getElementById('toggle-selection-btn');
+            const userList = document.getElementById('user-list');
 
-        const myManitoDisplay = document.getElementById('my-manito-display');
-        const myManitoTargetName = document.getElementById('my-manito-target-name');
-        const myManitoIntroduction = document.getElementById('my-manito-introduction');
-        const myManitoQuote = document.getElementById('my-manito-quote');
+            const myManitoDisplay = document.getElementById('my-manito-display');
+            const myManitoTargetName = document.getElementById('my-manito-target-name');
+            const myManitoIntroduction = document.getElementById('my-manito-introduction');
+            const myManitoQuote = document.getElementById('my-manito-quote');
 
 
-        // --- Global State ---
-        let currentUser = null;
-        let currentUserName = '';
-        let currentUserUid = '';
-        let currentEntries = []; // 실시간 데이터를 저장할 배열
-        let userHasSubmitted = false;
-        let userHasSelected = false;
-        let isSelectionOpen = false;
-        let currentEditingDocId = null;
+            // --- Global State ---
+            let currentUser = null;
+            let currentUserName = '';
+            let currentUserUid = '';
+            let currentEntries = []; // 실시간 데이터를 저장할 배열
+            let userHasSubmitted = false;
+            let userHasSelected = false;
+            let isSelectionOpen = false;
+            let currentEditingDocId = null;
 
-        // --- Functions ---
-        function showModal(title, content) {
-            modalTitle.textContent = title;
-            modalContent.textContent = content;
-            modal.classList.remove('hidden');
-        }
-
-        modalClose.addEventListener('click', () => modal.classList.add('hidden'));
-
-        // 비밀번호 유효성 검사 (숫자 4자리)
-        function isValidPassword(password) {
-            return /^\d{4}$/.test(password);
-        }
-
-        // --- Event Listeners ---
-        // 로그인/회원가입 처리
-        loginBtn.addEventListener('click', async () => {
-             console.log("로그인 버튼 클릭됨!"); // ★ 이 로그가 이제 표시될 것입니다.
-            const name = nameInput.value.trim();
-            const password = passwordInput.value.trim();
-            if (!name || !password) {
-                showModal('입력 오류', '이름과 비밀번호를 모두 입력해주세요.');
-                return;
-            }
-            if (!isValidPassword(password)) {
-                showModal('비밀번호 오류', '비밀번호는 숫자 4자리여야 합니다.');
-                return;
+            // --- Functions ---
+            function showModal(title, content) {
+                modalTitle.textContent = title;
+                modalContent.textContent = content;
+                modal.classList.remove('hidden');
             }
 
-            // 사용자별 고유 이메일 생성 (Firebase Auth 이메일 형식 요구사항)
-            const email = `${name.replace(/\s+/g, '')}@manito.com`;
+            modalClose.addEventListener('click', () => modal.classList.add('hidden'));
 
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-            } catch (error) {
-                if (error.code === 'auth/user-not-found') {
-                    showModal('로그인 실패', '이름 또는 비밀번호가 올바르지 않습니다.');
-                } else if (error.code === 'auth/wrong-password') {
-                    showModal('로그인 실패', '비밀번호가 올바르지 않습니다.');
-                } else {
-                    showModal('로그인 오류', `로그인 중 오류가 발생했습니다: ${error.message}`);
+            // 비밀번호 유효성 검사 (숫자 4자리)
+            function isValidPassword(password) {
+                return /^\d{4}$/.test(password);
+            }
+
+            // --- Event Listeners ---
+            // 로그인/회원가입 처리
+            loginBtn.addEventListener('click', async () => {
+                 console.log("로그인 버튼 클릭됨!"); // ★ 이 로그가 이제 표시될 것입니다.
+                const name = nameInput.value.trim();
+                const password = passwordInput.value.trim();
+                if (!name || !password) {
+                    showModal('입력 오류', '이름과 비밀번호를 모두 입력해주세요.');
+                    return;
                 }
-            }
-        });
-
-        signupBtn.addEventListener('click', async () => {
-            console.log("회원가입 버튼 클릭됨!");
-            const name = nameInput.value.trim();
-            const password = passwordInput.value.trim();
-            if (!name || !password) {
-                showModal('입력 오류', '이름과 비밀번호를 모두 입력해주세요.');
-                return;
-            }
-            if (!isValidPassword(password)) {
-                showModal('비밀번호 오류', '비밀번호는 숫자 4자리여야 합니다.');
-                return;
-            }
-
-            const email = `${name.replace(/\s+/g, '')}@manito.com`;
-
-            try {
-                // 이미 같은 이름으로 가입된 사용자가 있는지 확인
-                const usersRef = collection(db, "users");
-                const q = query(usersRef, where("name", "==", name));
-                const querySnapshot = await getDocs(q);
-                if (!querySnapshot.empty) {
-                    showModal('회원가입 실패', '이미 존재하는 이름입니다. 다른 이름을 사용해주세요.');
+                if (!isValidPassword(password)) {
+                    showModal('비밀번호 오류', '비밀번호는 숫자 4자리여야 합니다.');
                     return;
                 }
 
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                await updateProfile(userCredential.user, { displayName: name }); // displayName 설정
-                
-                // Firestore에 사용자 정보 저장 (비밀번호도 저장하여 관리자 열람 가능)
-                // 보안상 실제 서비스에서는 비밀번호를 평문으로 저장하지 않습니다. 해시 처리하거나 다른 방법을 사용해야 합니다.
-                await setDoc(doc(db, "users", userCredential.user.uid), {
-                    name: name,
-                    password: password, // 관리자 열람을 위해 비밀번호 저장 (보안상 권장되지는 않지만 요청에 따름)
-                    uid: userCredential.user.uid,
-                    createdAt: serverTimestamp()
-                });
+                // 사용자별 고유 이메일 생성 (Firebase Auth 이메일 형식 요구사항)
+                const email = `${name.replace(/\s+/g, '')}@manito.com`;
 
-                showModal('회원가입 성공', '회원가입이 완료되었습니다. 자동으로 로그인됩니다.');
-            } catch (error) {
-                if (error.code === 'auth/email-already-in-use') {
-                    showModal('회원가입 실패', '이미 사용 중인 이름(이메일)입니다. 로그인하거나 다른 이름을 사용해주세요.');
-                } else {
-                    showModal('회원가입 오류', `회원가입 중 오류가 발생했습니다: ${error.message}`);
-                }
-            }
-        });
-
-        adminLoginBtn.addEventListener('click', async () => {
-            console.log("관리자 로그인 버튼 클릭됨!");
-            try {
-                await signInWithEmailAndPassword(auth, ADMIN_EMAIL, ADMIN_PASSWORD);
-            } catch (error) {
-                showModal('관리자 로그인 실패', '관리자 이메일 또는 비밀번호가 올바르지 않습니다.');
-            }
-        });
-
-        logoutBtn.addEventListener('click', async () => {
-            console.log("로그아웃 버튼 클릭됨!");
-            await signOut(auth);
-        });
-
-
-        // Firebase Authentication 상태 변경 감지
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                currentUser = user;
-                currentUserUid = user.uid;
-                // displayName이 있으면 사용하고, 없으면 이메일에서 이름 추출
-                currentUserName = user.displayName || user.email.split('@')[0].replace(/\s+/g, ''); 
-                currentUserNameSpan.textContent = currentUserName;
-
-                authSection.classList.add('hidden');
-                manitoGameSection.classList.remove('hidden');
-
-                if (currentUser.email === ADMIN_EMAIL) {
-                    adminPanel.classList.remove('hidden');
-                    setupAdminControlsListener();
-                    setupUserListListener(); // 관리자일 경우 학생 목록 리스너 추가
-                } else {
-                    adminPanel.classList.add('hidden');
-                }
-                setupEntriesListener();
-            } else {
-                currentUser = null;
-                currentUserUid = '';
-                currentUserName = '';
-                authSection.classList.remove('hidden');
-                manitoGameSection.classList.add('hidden');
-                adminPanel.classList.add('hidden'); // 로그아웃 시 관리자 패널 숨김
-                // 입력 필드 초기화
-                nameInput.value = '';
-                passwordInput.value = '';
-            }
-        });
-
-        submitBtn.addEventListener('click', async () => {
-            console.log("제출하기 버튼 클릭됨!");
-            if (!currentUser || userHasSubmitted) {
-                showModal('알림', userHasSubmitted ? '이미 제출하셨습니다.' : '로그인 정보가 없습니다.');
-                return;
-            }
-            const introduction = introductionInput.value.trim();
-            const quote = quoteInput.value.trim();
-            if (!introduction || !quote) {
-                showModal('입력 오류', '모든 필드를 채워주세요.');
-                return;
-            }
-            submitBtn.disabled = true;
-            submitBtn.textContent = '제출 중...';
-            try {
-                await addDoc(collection(db, "manito-entries"), {
-                    introduction, quote,
-                    authorId: currentUserUid,
-                    authorName: currentUserName, // 제출자 이름 저장
-                    selectedBy: null,
-                    selectedByName: null, // 선택한 사람 이름 저장
-                    timestamp: serverTimestamp()
-                });
-                showModal('성공', '성공적으로 제출되었습니다!');
-                introductionInput.value = ''; // 제출 후 필드 초기화
-                quoteInput.value = ''; // 제출 후 필드 초기화
-            } catch (error) {
-                showModal('오류', '제출 중 오류가 발생했습니다.');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = '제출하기';
-            }
-        });
-
-        // 관리자: 마니또 선택 상태 토글
-        toggleSelectionBtn.addEventListener('click', async () => {
-            console.log("마니또 선택 상태 토글 버튼 클릭됨!");
-            const settingsRef = doc(db, "admin-controls", "settings");
-            try {
-                await setDoc(settingsRef, { selectionOpen: !isSelectionOpen }, { merge: true });
-                showModal('상태 변경', `마니또 선택 기능이 ${!isSelectionOpen ? '시작' : '마감'}되었습니다.`);
-            } catch (error) {
-                showModal('오류', '상태 변경 중 오류가 발생했습니다.');
-            }
-        });
-
-        // 관리자: 비밀번호 초기화 (Firestore에 저장된 비밀번호만)
-        userList.addEventListener('click', async (e) => {
-            if (e.target.classList.contains('reset-password-btn')) {
-                const targetUid = e.target.dataset.uid;
-                const targetName = e.target.dataset.name;
-                console.log(`비밀번호 초기화 버튼 클릭됨: ${targetName}`);
-
-                if (confirm(`${targetName} 학생의 비밀번호를 '1234'로 초기화하시겠습니까? (이 작업은 Firebase Auth의 비밀번호는 변경하지 않으며, Firestore에 저장된 정보만 업데이트합니다.)`)) {
-                    const userDocRef = doc(db, "users", targetUid);
-                    const userEmail = `${targetName.replace(/\s+/g, '')}@manito.com`; // Auth에서 사용할 이메일 형식
-
-                    try {
-                        // Firestore에 저장된 비밀번호 업데이트
-                        await updateDoc(userDocRef, { password: '1234' });
-
-                        // Firebase Auth 비밀번호 재설정 이메일 발송 (사용자가 직접 재설정하도록 유도)
-                        // 관리자 패널에서 직접 다른 사용자의 비밀번호를 강제로 바꾸는 기능은 보안상 Firebase Web SDK에서 지원하지 않습니다.
-                        // Admin SDK를 사용하거나, 사용자에게 재설정 이메일을 보내는 것이 일반적입니다.
-                        // 여기서는 재설정 이메일 발송을 시도합니다. (Firebase Auth에 해당 이메일이 등록되어 있어야 함)
-                        await sendPasswordResetEmail(auth, userEmail);
-
-                        showModal('비밀번호 초기화', `${targetName} 학생의 Firestore 비밀번호를 '1234'로 초기화했습니다.<br>또한, Firebase Auth 비밀번호 재설정을 위한 이메일이 ${userEmail}로 발송되었습니다. 학생이 이메일을 확인하도록 안내해주세요.`);
-                    } catch (error) {
-                        showModal('오류', `비밀번호 초기화 중 오류가 발생했습니다: ${error.message}`);
-                        console.error("비밀번호 초기화 오류:", error);
+                try {
+                    await signInWithEmailAndPassword(auth, email, password);
+                } catch (error) {
+                    if (error.code === 'auth/user-not-found') {
+                        showModal('로그인 실패', '이름 또는 비밀번호가 올바르지 않습니다.');
+                    } else if (error.code === 'auth/wrong-password') {
+                        showModal('로그인 실패', '비밀번호가 올바르지 않습니다.');
+                    } else {
+                        showModal('로그인 오류', `로그인 중 오류가 발생했습니다: ${error.message}`);
                     }
                 }
-            }
-        });
+            });
+
+            signupBtn.addEventListener('click', async () => {
+                console.log("회원가입 버튼 클릭됨!");
+                const name = nameInput.value.trim();
+                const password = passwordInput.value.trim();
+                if (!name || !password) {
+                    showModal('입력 오류', '이름과 비밀번호를 모두 입력해주세요.');
+                    return;
+                }
+                if (!isValidPassword(password)) {
+                    showModal('비밀번호 오류', '비밀번호는 숫자 4자리여야 합니다.');
+                    return;
+                }
+
+                const email = `${name.replace(/\s+/g, '')}@manito.com`;
+
+                try {
+                    // 이미 같은 이름으로 가입된 사용자가 있는지 확인
+                    const usersRef = collection(db, "users");
+                    const q = query(usersRef, where("name", "==", name));
+                    const querySnapshot = await getDocs(q);
+                    if (!querySnapshot.empty) {
+                        showModal('회원가입 실패', '이미 존재하는 이름입니다. 다른 이름을 사용해주세요.');
+                        return;
+                    }
+
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    await updateProfile(userCredential.user, { displayName: name }); // displayName 설정
+                    
+                    // Firestore에 사용자 정보 저장 (비밀번호도 저장하여 관리자 열람 가능)
+                    // 보안상 실제 서비스에서는 비밀번호를 평문으로 저장하지 않습니다. 해시 처리하거나 다른 방법을 사용해야 합니다.
+                    await setDoc(doc(db, "users", userCredential.user.uid), {
+                        name: name,
+                        password: password, // 관리자 열람을 위해 비밀번호 저장 (보안상 권장되지는 않지만 요청에 따름)
+                        uid: userCredential.user.uid,
+                        createdAt: serverTimestamp()
+                    });
+
+                    showModal('회원가입 성공', '회원가입이 완료되었습니다. 자동으로 로그인됩니다.');
+                } catch (error) {
+                    if (error.code === 'auth/email-already-in-use') {
+                        showModal('회원가입 실패', '이미 사용 중인 이름(이메일)입니다. 로그인하거나 다른 이름을 사용해주세요.');
+                    } else {
+                        showModal('회원가입 오류', `회원가입 중 오류가 발생했습니다: ${error.message}`);
+                    }
+                }
+            });
+
+            adminLoginBtn.addEventListener('click', async () => {
+                console.log("관리자 로그인 버튼 클릭됨!");
+                try {
+                    await signInWithEmailAndPassword(auth, ADMIN_EMAIL, ADMIN_PASSWORD);
+                } catch (error) {
+                    showModal('관리자 로그인 실패', '관리자 이메일 또는 비밀번호가 올바르지 않습니다.');
+                }
+            });
+
+            logoutBtn.addEventListener('click', async () => {
+                console.log("로그아웃 버튼 클릭됨!");
+                await signOut(auth);
+            });
 
 
-        // 수정 모달 관련 이벤트 리스너
-        saveEditBtn.addEventListener('click', async () => {
-            console.log("수정 완료 버튼 클릭됨!");
-            if (!currentEditingDocId) return;
-            const newIntro = editIntroductionInput.value.trim();
-            const newQuote = editQuoteInput.value.trim();
+            // Firebase Authentication 상태 변경 감지
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    currentUser = user;
+                    currentUserUid = user.uid;
+                    // displayName이 있으면 사용하고, 없으면 이메일에서 이름 추출
+                    currentUserName = user.displayName || user.email.split('@')[0].replace(/\s+/g, ''); 
+                    currentUserNameSpan.textContent = currentUserName;
 
-            if (!newIntro || !newQuote) {
-                showModal('입력 오류', '모든 필드를 채워주세요.');
-                return;
-            }
+                    authSection.classList.add('hidden');
+                    manitoGameSection.classList.remove('hidden');
 
-            try {
-                await updateDoc(doc(db, "manito-entries", currentEditingDocId), {
-                    introduction: newIntro,
-                    quote: newQuote,
-                    timestamp: serverTimestamp() // 수정 시간 업데이트
-                });
-                showModal('수정 완료', '성공적으로 수정되었습니다!');
+                    if (currentUser.email === ADMIN_EMAIL) {
+                        adminPanel.classList.remove('hidden');
+                        setupAdminControlsListener();
+                        setupUserListListener(); // 관리자일 경우 학생 목록 리스너 추가
+                    } else {
+                        adminPanel.classList.add('hidden');
+                    }
+                    setupEntriesListener();
+                } else {
+                    currentUser = null;
+                    currentUserUid = '';
+                    currentUserName = '';
+                    authSection.classList.remove('hidden');
+                    manitoGameSection.classList.add('hidden');
+                    adminPanel.classList.add('hidden'); // 로그아웃 시 관리자 패널 숨김
+                    // 입력 필드 초기화
+                    nameInput.value = '';
+                    passwordInput.value = '';
+                }
+            });
+
+            submitBtn.addEventListener('click', async () => {
+                console.log("제출하기 버튼 클릭됨!");
+                if (!currentUser || userHasSubmitted) {
+                    showModal('알림', userHasSubmitted ? '이미 제출하셨습니다.' : '로그인 정보가 없습니다.');
+                    return;
+                }
+                const introduction = introductionInput.value.trim();
+                const quote = quoteInput.value.trim();
+                if (!introduction || !quote) {
+                    showModal('입력 오류', '모든 필드를 채워주세요.');
+                    return;
+                }
+                submitBtn.disabled = true;
+                submitBtn.textContent = '제출 중...';
+                try {
+                    await addDoc(collection(db, "manito-entries"), {
+                        introduction, quote,
+                        authorId: currentUserUid,
+                        authorName: currentUserName, // 제출자 이름 저장
+                        selectedBy: null,
+                        selectedByName: null, // 선택한 사람 이름 저장
+                        timestamp: serverTimestamp()
+                    });
+                    showModal('성공', '성공적으로 제출되었습니다!');
+                    introductionInput.value = ''; // 제출 후 필드 초기화
+                    quoteInput.value = ''; // 제출 후 필드 초기화
+                } catch (error) {
+                    showModal('오류', '제출 중 오류가 발생했습니다.');
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '제출하기';
+                }
+            });
+
+            // 관리자: 마니또 선택 상태 토글
+            toggleSelectionBtn.addEventListener('click', async () => {
+                console.log("마니또 선택 상태 토글 버튼 클릭됨!");
+                const settingsRef = doc(db, "admin-controls", "settings");
+                try {
+                    await setDoc(settingsRef, { selectionOpen: !isSelectionOpen }, { merge: true });
+                    showModal('상태 변경', `마니또 선택 기능이 ${!isSelectionOpen ? '시작' : '마감'}되었습니다.`);
+                } catch (error) {
+                    showModal('오류', '상태 변경 중 오류가 발생했습니다.');
+                }
+            });
+
+            // 관리자: 비밀번호 초기화 (Firestore에 저장된 비밀번호만)
+            userList.addEventListener('click', async (e) => {
+                if (e.target.classList.contains('reset-password-btn')) {
+                    const targetUid = e.target.dataset.uid;
+                    const targetName = e.target.dataset.name;
+                    console.log(`비밀번호 초기화 버튼 클릭됨: ${targetName}`);
+
+                    if (confirm(`${targetName} 학생의 비밀번호를 '1234'로 초기화하시겠습니까? (이 작업은 Firebase Auth의 비밀번호는 변경하지 않으며, Firestore에 저장된 정보만 업데이트합니다.)`)) {
+                        const userDocRef = doc(db, "users", targetUid);
+                        const userEmail = `${targetName.replace(/\s+/g, '')}@manito.com`; // Auth에서 사용할 이메일 형식
+
+                        try {
+                            // Firestore에 저장된 비밀번호 업데이트
+                            await updateDoc(userDocRef, { password: '1234' });
+
+                            // Firebase Auth 비밀번호 재설정 이메일 발송 (사용자가 직접 재설정하도록 유도)
+                            // 관리자 패널에서 직접 다른 사용자의 비밀번호를 강제로 바꾸는 기능은 보안상 Firebase Web SDK에서 지원하지 않습니다.
+                            // Admin SDK를 사용하거나, 사용자에게 재설정 이메일을 보내는 것이 일반적입니다.
+                            // 여기서는 재설정 이메일 발송을 시도합니다. (Firebase Auth에 해당 이메일이 등록되어 있어야 함)
+                            await sendPasswordResetEmail(auth, userEmail);
+
+                            showModal('비밀번호 초기화', `${targetName} 학생의 Firestore 비밀번호를 '1234'로 초기화했습니다.<br>또한, Firebase Auth 비밀번호 재설정을 위한 이메일이 ${userEmail}로 발송되었습니다. 학생이 이메일을 확인하도록 안내해주세요.`);
+                        } catch (error) {
+                            showModal('오류', `비밀번호 초기화 중 오류가 발생했습니다: ${error.message}`);
+                            console.error("비밀번호 초기화 오류:", error);
+                        }
+                    }
+                }
+            });
+
+
+            // 수정 모달 관련 이벤트 리스너
+            saveEditBtn.addEventListener('click', async () => {
+                console.log("수정 완료 버튼 클릭됨!");
+                if (!currentEditingDocId) return;
+                const newIntro = editIntroductionInput.value.trim();
+                const newQuote = editQuoteInput.value.trim();
+
+                if (!newIntro || !newQuote) {
+                    showModal('입력 오류', '모든 필드를 채워주세요.');
+                    return;
+                }
+
+                try {
+                    await updateDoc(doc(db, "manito-entries", currentEditingDocId), {
+                        introduction: newIntro,
+                        quote: newQuote,
+                        timestamp: serverTimestamp() // 수정 시간 업데이트
+                    });
+                    showModal('수정 완료', '성공적으로 수정되었습니다!');
+                    editModal.classList.add('hidden');
+                    currentEditingDocId = null;
+                } catch (error) {
+                    showModal('오류', `수정 중 오류가 발생했습니다: ${error.message}`);
+                }
+            });
+
+            cancelEditBtn.addEventListener('click', () => {
+                console.log("수정 취소 버튼 클릭됨!");
                 editModal.classList.add('hidden');
                 currentEditingDocId = null;
-            } catch (error) {
-                showModal('오류', `수정 중 오류가 발생했습니다: ${error.message}`);
-            }
-        });
-
-        cancelEditBtn.addEventListener('click', () => {
-            console.log("수정 취소 버튼 클릭됨!");
-            editModal.classList.add('hidden');
-            currentEditingDocId = null;
-        });
-
-
-        // Firebase Admin Controls 리스너 설정 (선택 가능 여부)
-        function setupAdminControlsListener() {
-            onSnapshot(doc(db, "admin-controls", "settings"), (docSnap) => {
-                isSelectionOpen = docSnap.exists() ? docSnap.data().selectionOpen : false;
-                updateUIBasedOnSelectionState();
             });
-        }
 
-        // 관리자: 사용자 목록 실시간 업데이트
-        function setupUserListListener() {
-            onSnapshot(collection(db, "users"), (snapshot) => {
-                userList.innerHTML = ''; // 목록 초기화
-                snapshot.docs.forEach(docSnap => {
-                    const userData = docSnap.data();
-                    const listItem = document.createElement('li');
-                    listItem.className = 'flex justify-between items-center bg-gray-50 p-2 rounded-md border border-gray-100';
-                    listItem.innerHTML = `
-                        <span class="font-medium text-gray-700">${userData.name}</span>
-                        <div class="flex items-center space-x-2">
-                            <span class="text-sm text-gray-600">PW: ${userData.password}</span>
-                            <button class="reset-password-btn text-red-500 hover:text-red-700 text-sm" data-uid="${userData.uid}" data-name="${userData.name}">초기화</button>
-                        </div>
-                    `;
-                    userList.appendChild(listItem);
+
+            // Firebase Admin Controls 리스너 설정 (선택 가능 여부)
+            function setupAdminControlsListener() {
+                onSnapshot(doc(db, "admin-controls", "settings"), (docSnap) => {
+                    isSelectionOpen = docSnap.exists() ? docSnap.data().selectionOpen : false;
+                    updateUIBasedOnSelectionState();
                 });
-            });
-        }
+            }
 
-        // 마니또 엔트리 실시간 업데이트
-        function setupEntriesListener() {
-            if (!currentUser) return; // 현재 로그인한 사용자가 없으면 리스너 설정 안 함
+            // 관리자: 사용자 목록 실시간 업데이트
+            function setupUserListListener() {
+                onSnapshot(collection(db, "users"), (snapshot) => {
+                    userList.innerHTML = ''; // 목록 초기화
+                    snapshot.docs.forEach(docSnap => {
+                        const userData = docSnap.data();
+                        const listItem = document.createElement('li');
+                        listItem.className = 'flex justify-between items-center bg-gray-50 p-2 rounded-md border border-gray-100';
+                        listItem.innerHTML = `
+                            <span class="font-medium text-gray-700">${userData.name}</span>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-sm text-gray-600">PW: ${userData.password}</span>
+                                <button class="reset-password-btn text-red-500 hover:text-red-700 text-sm" data-uid="${userData.uid}" data-name="${userData.name}">초기화</button>
+                            </div>
+                        `;
+                        userList.appendChild(listItem);
+                    });
+                });
+            }
 
-            onSnapshot(collection(db, "manito-entries"), async (snapshot) => {
-                const entries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                entries.sort((a, b) => (a.timestamp?.toMillis() || 0) - (b.timestamp?.toMillis() || 0));
-                
-                currentEntries = entries; // 실시간 데이터를 전역 변수에 저장
+            // 마니또 엔트리 실시간 업데이트
+            function setupEntriesListener() {
+                if (!currentUser) return; // 현재 로그인한 사용자가 없으면 리스너 설정 안 함
 
-                userHasSubmitted = entries.some(entry => entry.authorId === currentUserUid);
-                userHasSelected = entries.some(entry => entry.selectedBy === currentUserUid);
-
-                if (userHasSubmitted) {
-                    manitoFormContainer.style.display = 'none'; // 이미 제출했으면 폼 숨김
-                } else {
-                    manitoFormContainer.style.display = 'block'; // 제출 안 했으면 폼 표시
-                }
-                
-                // 내가 선택한 마니또 정보 표시
-                const mySelection = entries.find(entry => entry.selectedBy === currentUserUid);
-
-                if (mySelection) {
-                    myManitoTargetName.textContent = mySelection.authorName + " 친구";
-                    myManitoIntroduction.textContent = `"${mySelection.introduction}"`;
-                    myManitoQuote.textContent = `"${mySelection.quote}"`;
-                    myManitoDisplay.classList.remove('hidden');
-                } else {
-                    myManitoDisplay.classList
+                onSnapshot(collection(db, "manito-entries"), async (snapshot) => {
+                    const entries = snapshot.docs.map
